@@ -1,24 +1,13 @@
 package com.duoc.menu.ui
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -27,18 +16,32 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.gamevault.network.Anime
+import com.example.gamevault.network.RetrofitInstance
+import coil.compose.rememberImagePainter
 import com.example.gamevault.R
-import com.example.gamevault.viewmodel.AnimePost
-
+import kotlinx.coroutines.launch
+import coil.compose.AsyncImage
 
 @Composable
 fun AnimeListScreen() {
-    // Lista de publicaciones de anime
-    val animeList = listOf(
-        AnimePost(1, "Naruto", "Un ninja joven y su viaje para convertirse en Hokage.", R.drawable.naruto),
-        AnimePost(2, "One Piece", "Un joven pirata busca el tesoro más grande del mundo.", R.drawable.one_piece),
-        AnimePost(3, "Attack on Titan", "Humanos luchan por sobrevivir contra gigantes devoradores de personas.", R.drawable.attack_on_titan)
-    )
+    var animeList by remember { mutableStateOf<List<Anime>>(emptyList()) }
+    var isLoading by remember { mutableStateOf(true) }
+    var errorMessage by remember { mutableStateOf("") }
+
+    val coroutineScope = rememberCoroutineScope()
+
+    // Realizamos la llamada a la API en un hilo en segundo plano
+    LaunchedEffect(true) {
+        try {
+            val response = RetrofitInstance.api.getTopAnimes()
+            animeList = response.data.take(5) // Obtener solo los 5 más populares
+            isLoading = false
+        } catch (e: Exception) {
+            isLoading = false
+            errorMessage = "Error al cargar los datos"
+        }
+    }
 
     // Contenedor principal con fondo
     Surface(
@@ -46,40 +49,40 @@ fun AnimeListScreen() {
         color = Color(0xFFF3F4F6) // Fondo gris claro
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
-            // ---------- Barra de encabezado ----------
-
+            // Barra de encabezado
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(Color.White)
-                    .padding(16.dp), // Espaciado de la barra
+                    .padding(16.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Logo esquina izquierda
                 Image(
-                    painter = painterResource(id = R.drawable.logo), // Reemplaza "logo" con el nombre de tu recurso de logo
+                    painter = painterResource(id = R.drawable.logo1), // Usa tu propio logo
                     contentDescription = "Logo Anime",
                     modifier = Modifier
-                        .size(40.dp) // Tamaño del logo
-                        .clip(CircleShape) // Forma circular para el logo
+                        .size(40.dp)
+                        .clip(CircleShape)
                 )
-
-                // Título
-                Spacer(modifier = Modifier.weight(1f)) // Esto empuja el texto hacia la derecha
+                Spacer(modifier = Modifier.weight(1f))
                 Text(
                     text = "Animes Populares",
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF1E88E5) // Color azul
+                    color = Color(0xFF1E88E5)
                 )
             }
 
-            // Lista de publicaciones
-            LazyColumn(modifier = Modifier.padding(16.dp)) {
-                items(animeList) { animePost ->
-                    // Cada item de la lista (una publicación de anime)
-
-                    AnimePostItem(animePost)
+            // Verifica si está cargando o si ocurrió un error
+            if (isLoading) {
+                CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
+            } else if (errorMessage.isNotEmpty()) {
+                Text(text = errorMessage, color = Color.Red, modifier = Modifier.align(Alignment.CenterHorizontally))
+            } else {
+                // Lista de animes
+                LazyColumn(modifier = Modifier.padding(16.dp)) {
+                    items(animeList) { anime ->
+                        AnimePostItem(anime)
+                    }
                 }
             }
         }
@@ -87,8 +90,7 @@ fun AnimeListScreen() {
 }
 
 @Composable
-fun AnimePostItem(animePost: AnimePost) {
-    // Card para cada publicación
+fun AnimePostItem(anime: Anime) {
     Surface(
         modifier = Modifier
             .fillMaxWidth()
@@ -97,38 +99,69 @@ fun AnimePostItem(animePost: AnimePost) {
         color = Color.White
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            // Imagen de la portada
-            Image(
-                painter = painterResource(id = animePost.imageResId),
-                contentDescription = animePost.titulo,
+            AsyncImage(
+                model = anime.image_url,
+                contentDescription = anime.title,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(180.dp)
-                    .clip(RoundedCornerShape(8.dp)) // Bordes redondeados
+                    .clip(RoundedCornerShape(8.dp))
             )
+
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Título del anime
             Text(
-                text = animePost.titulo,
+                text = anime.title,
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFF1E88E5) // Color azul
+                color = Color(0xFF1E88E5)
             )
+
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Breve descripción
+            // Mostrar géneros
+            val genreText = if (anime.genres.isNotEmpty()) {
+                anime.genres.joinToString(", ") { it.name }
+            } else {
+                "Sin géneros disponibles"
+            }
             Text(
-                text = animePost.descripcion,
+                text = "Géneros: $genreText",
+                fontSize = 14.sp,
+                color = Color.Gray
+            )
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            // Mostrar estado de emisión
+            Text(
+                text = "Estado: ${anime.status}",
+                fontSize = 14.sp,
+                color = Color.Gray
+            )
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            // Mostrar cantidad de capítulos, si es null mostramos "Desconocido"
+            val episodesText = anime.episodes?.toString() ?: "Desconocido"
+            Text(
+                text = "Episodios: $episodesText",
+                fontSize = 14.sp,
+                color = Color.Gray
+            )
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            Text(
+                text = "Tipo: ${anime.type ?: "Tipo desconocido"}",
                 fontSize = 14.sp,
                 color = Color.Gray
             )
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Botón "Ver publicación"
             Button(
-                onClick = {  },
+                onClick = { /* Acción para ver detalles */ },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(8.dp),
                 colors = ButtonDefaults.buttonColors(

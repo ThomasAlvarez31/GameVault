@@ -19,6 +19,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.duoc.menu.ui.AnimeListScreen
+import com.duoc.menu.ui.AnimeSearchScreen
 import com.example.gamevault.ui.theme.GameVaultTheme
 
 class MainActivity : ComponentActivity() {
@@ -41,11 +42,10 @@ class MainActivity : ComponentActivity() {
                             icon = { Icon(Icons.Filled.Home, "Inicio") }
                         )
                         NavigationBarItem(
-                            //ruta princiapl
-                            selected = navController.currentBackStackEntry?.destination?.route=="form",
-                            onClick = {navController.navigate("form")},
-                            label = {Text("Formulario")},
-                            icon = { Icon(Icons.Filled.Home, "Formulario") }
+                            selected = navController.currentBackStackEntry?.destination?.route == "search",
+                            onClick = { navController.navigate("search") },
+                            label = { Text("Buscar") },
+                            icon = { Icon(Icons.Filled.Home, "Buscar") } // Cambia icono si quieres
                         )
 
                     }
@@ -58,7 +58,7 @@ class MainActivity : ComponentActivity() {
                     modifier= Modifier.padding(innerPadding)
                 ){
                     composable("home"){ AnimeListScreen()}
-                    //composable("form"){(FormularioScreen())}
+                    composable("search") { AnimeSearchScreen() }
                 }
 
             }
