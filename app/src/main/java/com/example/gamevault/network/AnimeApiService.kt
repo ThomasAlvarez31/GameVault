@@ -9,4 +9,7 @@ interface AnimeApiService {
 
     @GET("anime")
     suspend fun searchAnimes(@Query("q") query: String): AnimeResponse
+
+    @GET("anime/{id}")
+    suspend fun getAnimeById(@retrofit2.http.Path("id") id: Int): AnimeDetailResponse
 }

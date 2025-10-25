@@ -8,12 +8,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
 import com.example.gamevault.network.Anime
 import com.example.gamevault.network.RetrofitInstance
 import kotlinx.coroutines.launch
-
 @Composable
-fun AnimeSearchScreen() {
+fun AnimeSearchScreen(navController: NavController) {
     var query by remember { mutableStateOf("") }
     var animeList by remember { mutableStateOf<List<Anime>>(emptyList()) }
     var isLoading by remember { mutableStateOf(false) }
@@ -36,7 +36,7 @@ fun AnimeSearchScreen() {
 
         Button(
             onClick = {
-                if(query.isNotBlank()) {
+                if (query.isNotBlank()) {
                     isLoading = true
                     errorMessage = ""
                     coroutineScope.launch {
@@ -65,7 +65,9 @@ fun AnimeSearchScreen() {
         } else {
             LazyColumn {
                 items(animeList) { anime ->
-                    AnimePostItem(anime)
+                    AnimePostItem(anime = anime) {
+                        navController.navigate("detail/${anime.mal_id}")
+                    }
                 }
             }
         }

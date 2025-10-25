@@ -18,6 +18,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.duoc.menu.ui.AnimeDetailScreen
 import com.duoc.menu.ui.AnimeListScreen
 import com.duoc.menu.ui.AnimeSearchScreen
 import com.example.gamevault.ui.theme.GameVaultTheme
@@ -56,9 +57,13 @@ class MainActivity : ComponentActivity() {
                     navController = navController,
                     startDestination= "home",
                     modifier= Modifier.padding(innerPadding)
-                ){
-                    composable("home"){ AnimeListScreen()}
-                    composable("search") { AnimeSearchScreen() }
+                ) {
+                    composable("home") { AnimeListScreen(navController) }
+                    composable("search") { AnimeSearchScreen(navController) }
+                    composable("detail/{animeId}") { backStackEntry ->
+                        val animeId = backStackEntry.arguments?.getString("animeId")?.toIntOrNull()
+                        animeId?.let { AnimeDetailScreen(it) }
+                    }
                 }
 
             }

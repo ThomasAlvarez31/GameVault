@@ -16,6 +16,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import com.example.gamevault.network.Anime
 import com.example.gamevault.network.RetrofitInstance
 import coil.compose.rememberImagePainter
@@ -24,18 +25,15 @@ import kotlinx.coroutines.launch
 import coil.compose.AsyncImage
 
 @Composable
-fun AnimeListScreen() {
+fun AnimeListScreen(navController: NavController) {
     var animeList by remember { mutableStateOf<List<Anime>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
     var errorMessage by remember { mutableStateOf("") }
 
-    val coroutineScope = rememberCoroutineScope()
-
-    // Realizamos la llamada a la API en un hilo en segundo plano
     LaunchedEffect(true) {
         try {
             val response = RetrofitInstance.api.getTopAnimes()
-            animeList = response.data.take(5) // Obtener solo los 5 más populares
+            animeList = response.data.take(5)
             isLoading = false
         } catch (e: Exception) {
             isLoading = false
@@ -43,13 +41,11 @@ fun AnimeListScreen() {
         }
     }
 
-    // Contenedor principal con fondo
     Surface(
         modifier = Modifier.fillMaxSize(),
-        color = Color(0xFFF3F4F6) // Fondo gris claro
+        color = Color(0xFFF3F4F6)
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
-            // Barra de encabezado
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -57,7 +53,7 @@ fun AnimeListScreen() {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Image(
-                    painter = painterResource(id = R.drawable.logo1), // Usa tu propio logo
+                    painter = painterResource(id = R.drawable.logo1),
                     contentDescription = "Logo Anime",
                     modifier = Modifier
                         .size(40.dp)
@@ -72,16 +68,16 @@ fun AnimeListScreen() {
                 )
             }
 
-            // Verifica si está cargando o si ocurrió un error
             if (isLoading) {
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
             } else if (errorMessage.isNotEmpty()) {
                 Text(text = errorMessage, color = Color.Red, modifier = Modifier.align(Alignment.CenterHorizontally))
             } else {
-                // Lista de animes
                 LazyColumn(modifier = Modifier.padding(16.dp)) {
                     items(animeList) { anime ->
-                        AnimePostItem(anime)
+                        AnimePostItem(anime = anime) {
+                            navController.navigate("detail/${anime.mal_id}")
+                        }
                     }
                 }
             }
@@ -89,8 +85,13 @@ fun AnimeListScreen() {
     }
 }
 
+
+
 @Composable
-fun AnimePostItem(anime: Anime) {
+fun AnimePostItem(
+    anime: Anime,
+    onViewClick: () -> Unit // 👈 nuevo parámetro para navegar
+) {
     Surface(
         modifier = Modifier
             .fillMaxWidth()
@@ -133,7 +134,7 @@ fun AnimePostItem(anime: Anime) {
 
             Spacer(modifier = Modifier.height(4.dp))
 
-            // Mostrar estado de emisión
+            // Mostrar estado
             Text(
                 text = "Estado: ${anime.status}",
                 fontSize = 14.sp,
@@ -142,7 +143,7 @@ fun AnimePostItem(anime: Anime) {
 
             Spacer(modifier = Modifier.height(4.dp))
 
-            // Mostrar cantidad de capítulos, si es null mostramos "Desconocido"
+            // Mostrar episodios
             val episodesText = anime.episodes?.toString() ?: "Desconocido"
             Text(
                 text = "Episodios: $episodesText",
@@ -161,7 +162,7 @@ fun AnimePostItem(anime: Anime) {
             Spacer(modifier = Modifier.height(12.dp))
 
             Button(
-                onClick = { /* Acción para ver detalles */ },
+                onClick = onViewClick, // 👈 aquí llamamos la función recibida
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(8.dp),
                 colors = ButtonDefaults.buttonColors(
