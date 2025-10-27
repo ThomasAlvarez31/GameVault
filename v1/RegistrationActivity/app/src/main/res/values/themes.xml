@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+    CORRECCIÓN: Se cambia el 'parent' de 'android:Theme.Material...'
+    a 'Theme.MaterialComponents.DayNight.NoActionBar' o 'Theme.AppCompat...'
+    Esto soluciona el error 'You need to use a Theme.AppCompat theme'.
+    -->
+    <style name="Theme.RegistrationActivity" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <!-- Personaliza tu tema aquí si es necesario. -->
+        <item name="colorPrimary">@color/purple_500</item>
+        <item name="colorSecondary">@color/teal_200</item>
+        <!-- Agrega otros atributos de color según tu paleta de la aplicación -->
+    </style>
+</resources>
