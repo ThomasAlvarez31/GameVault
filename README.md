@@ -1,4 +1,4 @@
-##Projecto GameVault: Acceso y Comunidad
+## Projecto GameVault: Acceso y Comunidad
 
 ---
 ## 🌟 Visión General del Proyecto
